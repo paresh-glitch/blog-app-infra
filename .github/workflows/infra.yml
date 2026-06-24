@@ -1,0 +1,60 @@
+name: deploy aws infra
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.tf'
+      - 'modules/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.tf'
+      - 'modules/**'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    env:
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_vpc_cidr: ${{ vars.VPC_CIDR }}
+      TF_VAR_public_subnet_cidrs: '["10.0.1.0/24","10.0.2.0/24"]'
+      TF_VAR_private_subnet_cidrs: '["10.0.3.0/24","10.0.4.0/24"]'
+      TF_VAR_azs: '["ap-south-1a","ap-south-1b"]'
+      TF_VAR_repo_names: '["app","nginx"]'
+
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+
+      - name: configure aws
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: set environment
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" ]]; then
+            echo "TF_VAR_env=prod" >> $GITHUB_ENV
+          elif [[ "${{ github.ref_name }}" == "dev" ]]; then
+            echo "TF_VAR_env=dev" >> $GITHUB_ENV
+          fi
+
+      - name: setup terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: terraform init
+        run: terraform init -backend-config="key=${TF_VAR_env}/ecs/terraform.tfstate"
+
+      - name: terraform plan
+        run: terraform plan
+
+      - name: terraform apply
+        if: github.event_name == 'push'
+        run: terraform apply -auto-approve

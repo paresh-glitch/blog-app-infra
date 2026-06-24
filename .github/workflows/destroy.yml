@@ -1,0 +1,51 @@
+name: Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to destroy"
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+
+    env:
+      TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+      TF_VAR_vpc_cidr: ${{ vars.VPC_CIDR }}
+      TF_VAR_public_subnet_cidrs: '["10.0.1.0/24","10.0.2.0/24"]'
+      TF_VAR_private_subnet_cidrs: '["10.0.3.0/24","10.0.4.0/24"]'
+      TF_VAR_azs: '["ap-south-1a","ap-south-1b"]'
+      TF_VAR_repo_names: '["app","nginx"]'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: set environment
+        run: echo "TF_VAR_env=${{ github.event.inputs.environment }}" >> $GITHUB_ENV  
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend-config="key=${TF_VAR_env}/ecs/terraform.tfstate"
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
+
