@@ -24,3 +24,5 @@ terraform.tfvars
 # Include lock file as recommended by Terraform official docs
 .terraform.lock.hcl
 .env
+
+.github/
