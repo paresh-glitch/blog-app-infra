@@ -127,7 +127,7 @@ resource "aws_ecs_service" "service" {
   }
 
   load_balancer {
-    target_group_arn = var.target_group_arn
+    target_group_arn = var.target_group_blue_arn
     container_name   = "nginx"
     container_port   = 80
   }

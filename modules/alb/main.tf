@@ -41,8 +41,8 @@ resource "aws_lb" "alb" {
   }
 }
 
-resource "aws_lb_target_group" "tg" {
-  name        = "${var.env}-tg"
+resource "aws_lb_target_group" "tg_blue" {
+  name        = "${var.env}-tg-blue"
   port        = 80
   protocol    = "HTTP"
   target_type = "ip"
@@ -56,7 +56,27 @@ resource "aws_lb_target_group" "tg" {
   }
 
   tags = {
-    Name = "${var.env}-tg"
+    Name = "${var.env}-tg_blue"
+    Environment = var.env
+  }
+}
+
+resource "aws_lb_target_group" "tg_green" {
+  name        = "${var.env}-tg-green"
+  port        = 80
+  protocol    = "HTTP"
+  target_type = "ip"
+  vpc_id      = var.vpc_id
+
+  health_check {
+    path                = "/health"
+    interval            = 30
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
+
+  tags = {
+    Name = "${var.env}-tg-green"
     Environment = var.env
   }
 }
@@ -67,8 +87,21 @@ resource "aws_lb_listener" "this" {
   protocol          = "HTTP"
 
   default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.tg.arn
+    type = "forward"
+    forward {
+      target_group {
+        arn    = aws_lb_target_group.tg_blue.arn
+        weight = 1
+      }
+      target_group {
+        arn    = aws_lb_target_group.tg_green.arn
+        weight = 0
+      }
+    }
+  }
+
+  lifecycle {
+    ignore_changes = [default_action]
   }
 }
 

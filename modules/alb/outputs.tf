@@ -1,5 +1,5 @@
 output "target_group_arn" {
-  value = aws_lb_target_group.tg.arn
+  value = aws_lb_target_group.tg_blue.arn
 }
 
 output "alb_sg_id" {
@@ -16,4 +16,20 @@ output "alb_listener_arn" {
 
 output "alb_name" {
   value = aws_lb.alb.name
+}
+
+output "blue_tg_arn" {
+  value = aws_lb_target_group.tg_blue.arn
+}
+
+output "green_tg_arn" {
+  value = aws_lb_target_group.tg_green.arn
+}
+
+output "blue_tg_name" {
+  value = aws_lb_target_group.tg_blue.name
+}
+
+output "green_tg_name" {
+  value = aws_lb_target_group.tg_green.name
 }

@@ -14,7 +14,7 @@ variable "aws_region" {
   type = string
 }
 
-variable "target_group_arn" {
+variable "target_group_blue_arn" {
   type = string
 }
 variable "private_subnet_ids" {
