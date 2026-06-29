@@ -31,3 +31,6 @@ variable "alb_sg_id" {
   type = string
 }
 
+variable "secret_arn" {
+  type = string
+}

@@ -73,7 +73,9 @@ resource "aws_ecs_task_definition" "td" {
       essential = true
       environment = [
         { name = "PORT",     value = "5000" },
-        { name = "MONGO_URI",   value = "mongodb://127.0.0.1:27017/blogdb" }
+      ]
+      secrets = [
+        {name = "MONGO_URI", valueFrom = var.secret_arn }
       ]
       logConfiguration = {
         logDriver = "awslogs"

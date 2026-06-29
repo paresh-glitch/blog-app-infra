@@ -39,4 +39,27 @@ module "ecs" {
   execution_role_arn = data.aws_iam_role.ecs_execution.arn
   app_image          = module.ecr.repo_urls["${var.env}-app"]
   nginx_image        = module.ecr.repo_urls["${var.env}-nginx"]
+  secret_arn = module.secrets_manager.secret_arn
+}
+
+module "secrets_manager" {
+  source      = "./modules/secrets_manager"
+  env         = var.env
+  secret_name = "mini-blog/prod/mongo-uri"
+}
+
+resource "aws_iam_role_policy" "secrets_manager_read" {
+  name = "secrets-manager-read-${var.env}"
+  role = data.aws_iam_role.ecs_execution.name
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = module.secrets_manager.secret_arn
+      }
+    ]
+  })
 }
